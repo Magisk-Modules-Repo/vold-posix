@@ -8,6 +8,9 @@ Since AOSP only support vfat for external sdcard. Add exfat/ntfs/ext4/f2fs suppo
 
 *__Note:__ If your ROM has supported exfat and you still want to use the built-in driver, don't use this module!
 
+## Instructions
+If you want to format your sdcard, dont do this on the phone. otherwise it will format to FAT32.
+
 You can report bug [here](https://github.com/noname8964/vold-posix/issues) if occurs issue.
 
 vold source code can found [here](https://github.com/noname8964/system_vold).
