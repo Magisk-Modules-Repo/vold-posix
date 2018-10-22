@@ -1,7 +1,13 @@
-# Magisk Module Template
+# Vold - exFAT/NTFS/EXT4/F2FS Support
 
-**Update `README.md` if you want to submit your module to the online repo!** This `README.md` will be shown in a Webview dialog when a user taps your module in Magisk Manager, so make sure to place some information / changelog / notes here.
+Since AOSP only support vfat for external sdcard. Add exfat/ntfs/ext4/f2fs support for vold.
+vold source code can found [here](https://github.com/noname8964/system_vold).
+exfat/ntfs use fuse driver.
+soucre code is from [LineageOS](https://github.com/LineageOS).
+[fuse](https://github.com/LineageOS/android_external_fuse)
+[exfat](https://github.com/LineageOS/android_external_exfat)
+[ntfs](https://github.com/LineageOS/android_external_ntfs-3g)
 
-If you are not familiar with the Markdown syntax, you can start by experimenting on GitHub's online Markdown editor, which will let you preview before publishing. If you need more help, the [Markdown Cheat Sheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet) will be handy.
+If your ROM has supported exfat and you still want to use the built-in driver, don't use this module!
 
-For more information about modules and repos, please check the [official documentation](https://topjohnwu.github.io/Magisk/)
+Please note, this only support Oreo 8.1 and arm64-v8a. Other arch can compile yourself.
