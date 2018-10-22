@@ -4,4 +4,4 @@ version=1.0
 versionCode=1
 author=noname8964 @ github.com
 description=Add exfat/ntfs/ext4/f2fs filesystem support for external sdcard. (f2fs only available if your kernel support it.)
-template=17000
+minMagisk=17000
