@@ -63,10 +63,12 @@ api_level_arch_detect
 # Useful if you are creating Android version / platform dependent mods
 if [ $API != 27 ]; then
   ui_print "Only support Oreo 8.1"
+  exit 1
 fi
 
 if [ $ARCH != "arm64" ]; then
   ui_print "Only support arm64 devices"
+  exit 1
 fi
 
 # Setup busybox and binaries
