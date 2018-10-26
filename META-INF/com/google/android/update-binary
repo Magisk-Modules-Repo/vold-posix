@@ -71,6 +71,8 @@ if [ $ARCH != "arm64" ]; then
   exit 1
 fi
 
+MAGISKINIT=magiskinit_$MAGISK_VER_CODE
+
 # Setup busybox and binaries
 $BOOTMODE && boot_actions || recovery_actions
 
@@ -79,7 +81,7 @@ $BOOTMODE && boot_actions || recovery_actions
 ##########################################################################################
 
 # Extract common files
-unzip -o "$ZIP" module.prop config.sh 'common/*' -d $INSTALLER >&2
+unzip -o "$ZIP" module.prop config.sh 'common/*' magiskboot 'magiskinit_*' init.custom.rc -d $INSTALLER >&2
 
 [ ! -f $INSTALLER/config.sh ] && abort "! Unable to extract zip file!"
 # Load configurations
@@ -116,6 +118,9 @@ mkdir -p $MODPATH
 # Extract files to system. Use your own method if needed
 ui_print "- Extracting module files"
 unzip -o "$ZIP" 'system/*' -d $MODPATH >&2
+unzip -o "$ZIP" 'magiskboot' -d $MODPATH >&2
+unzip -o "$ZIP" 'magiskinit_*' -d $MODPATH >&2
+unzip -o "$ZIP" 'init.custom.rc' -d $MODPATH >&2
 
 # Remove placeholder
 rm -f $MODPATH/system/placeholder 2>/dev/null
@@ -148,6 +153,68 @@ $LATESTARTSERVICE && cp -af $INSTALLER/common/service.sh $MODPATH/service.sh
 ui_print "- Setting permissions"
 set_permissions
 
+ui_print "- Patching boot image"
+find_boot_image
+find_dtbo_image
+
+[ -z $BOOTIMAGE ] && abort "! Unable to detect target image"
+ui_print "- Target image: $BOOTIMAGE"
+[ -z $DTBOIMAGE ] || ui_print "- DTBO image: $DTBOIMAGE"
+[ -e "$BOOTIMAGE" ] || abort "$BOOTIMAGE does not exist!"
+
+ui_print "- Unpacking boot image"
+cd $INSTALLER && chmod 0755 ./magiskboot
+./magiskboot --unpack "$BOOTIMAGE"
+
+case $? in
+  1 )
+    abort "! Unable to unpack boot image"
+    ;;
+  2 )
+    ui_print "- ChromeOS boot image detected"
+    abort "! Unsupport type"
+    ;;
+  3 )
+    ui_print "! Sony ELF32 format detected"
+    abort "! Please use BootBridge from @AdrianDC to flash Magisk"
+    ;;
+  4 )
+    ui_print "! Sony ELF64 format detected"
+    abort "! Stock kernel cannot be patched, please use a custom kernel"
+esac
+
+ui_print "- Checking ramdisk status"
+./magiskboot --cpio ramdisk.cpio test
+case $? in
+  0 )  # Stock boot
+    ui_print "- Stock boot image detected"
+    abort "! Please install Magisk first"
+    ;;
+  1 )  # Magisk patched
+    ui_print "- Magisk patched boot image detected"
+    ;;
+  2 ) # Other patched
+    ui_print "! Boot image patched by unsupported programs"
+    abort "! Please restore stock boot image"
+    ;;
+esac
+
+ui_print "- Patching ramdisk"
+
+./magiskboot --cpio ramdisk.cpio \
+"add 750 init $MAGISKINIT" \
+"add 755 vold $MODPATH/system/bin/vold" \
+"add 750 init.custom.rc init.custom.rc"
+
+ui_print "- Repacking boot image"
+./magiskboot --repack "$BOOTIMAGE" || abort "! Unable to repack boot image!"
+
+#./magiskboot --cleanup
+
+ui_print "- Flashing new boot image"
+flash_image new-boot.img "$BOOTIMAGE" || abort "! Insufficient partition size"
+#rm -f new-boot.img
+
 ##########################################################################################
 # Finalizing
 ##########################################################################################
@@ -156,7 +223,7 @@ set_permissions
 unmount_magisk_img
 
 $BOOTMODE || recovery_cleanup
-rm -rf $TMPDIR
+#rm -rf $TMPDIR
 
 ui_print "- Done"
 exit 0
