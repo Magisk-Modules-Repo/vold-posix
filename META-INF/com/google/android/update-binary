@@ -71,7 +71,8 @@ if [ $ARCH != "arm64" ]; then
   exit 1
 fi
 
-MAGISKINIT=magiskinit_$MAGISK_VER_CODE
+MAGISKVER=`echo $MAGISK_VER_CODE|cut -c1-3`
+MAGISKINIT=magiskinit_"$MAGISKVER"00
 
 # Setup busybox and binaries
 $BOOTMODE && boot_actions || recovery_actions
@@ -200,6 +201,10 @@ case $? in
 esac
 
 ui_print "- Patching ramdisk"
+
+if [ ! -f $MODDIR/$MAGISKINIT ]; then
+  abort "! Don't support current Magisk version. Please wait for update."
+fi
 
 ./magiskboot --cpio ramdisk.cpio \
 "add 750 init $MAGISKINIT" \
