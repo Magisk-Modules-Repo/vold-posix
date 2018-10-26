@@ -209,11 +209,11 @@ ui_print "- Patching ramdisk"
 ui_print "- Repacking boot image"
 ./magiskboot --repack "$BOOTIMAGE" || abort "! Unable to repack boot image!"
 
-#./magiskboot --cleanup
+./magiskboot --cleanup
 
 ui_print "- Flashing new boot image"
 flash_image new-boot.img "$BOOTIMAGE" || abort "! Insufficient partition size"
-#rm -f new-boot.img
+rm -f new-boot.img
 
 ##########################################################################################
 # Finalizing
@@ -223,7 +223,7 @@ flash_image new-boot.img "$BOOTIMAGE" || abort "! Insufficient partition size"
 unmount_magisk_img
 
 $BOOTMODE || recovery_cleanup
-#rm -rf $TMPDIR
+rm -rf $TMPDIR
 
 ui_print "- Done"
 exit 0
