@@ -202,7 +202,7 @@ esac
 
 ui_print "- Patching ramdisk"
 
-if [ ! -f $MODDIR/$MAGISKINIT ]; then
+if [ ! -f $MAGISKINIT ]; then
   abort "! Don't support current Magisk version. Please wait for update."
 fi
 
