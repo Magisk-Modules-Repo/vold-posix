@@ -72,7 +72,7 @@ if [ $ARCH != "arm64" ]; then
 fi
 
 MAGISKVER=`echo $MAGISK_VER_CODE|cut -c1-3`
-MAGISKINIT=magiskinit_"$MAGISKVER"00
+MAGISKINIT=magiskinit_"$MAGISKVER"
 
 # Setup busybox and binaries
 $BOOTMODE && boot_actions || recovery_actions

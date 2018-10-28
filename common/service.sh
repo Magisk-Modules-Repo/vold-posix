@@ -38,7 +38,7 @@ if [ ! -x /vold ]; then
   mount_partitions
 
   MAGISKVER=`echo $MAGISK_VER_CODE|cut -c1-3`
-  MAGISKINIT=magiskinit_"$MAGISKVER"00
+  MAGISKINIT=magiskinit_"$MAGISKVER"
 
   log_print "- Patching boot image"
   find_boot_image
