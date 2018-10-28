@@ -62,17 +62,19 @@ api_level_arch_detect
 # You can get the Android API version from $API, the CPU architecture from $ARCH
 # Useful if you are creating Android version / platform dependent mods
 if [ $API != 27 ]; then
-  ui_print "Only support Oreo 8.1"
-  exit 1
+  abort "Only support Oreo 8.1"
 fi
 
 if [ $ARCH != "arm64" ]; then
-  ui_print "Only support arm64 devices"
-  exit 1
+  abort "Only support arm64 devices"
 fi
 
 MAGISKVER=`echo $MAGISK_VER_CODE|cut -c1-3`
 MAGISKINIT=magiskinit_"$MAGISKVER"
+
+if [ 171 -gt $MAGISKVER ] || [ $MAGISKVER -gt 173 ]; then
+  abort "! Don't support current Magisk version. Please wait for update."
+fi
 
 # Setup busybox and binaries
 $BOOTMODE && boot_actions || recovery_actions
@@ -203,7 +205,7 @@ esac
 ui_print "- Patching ramdisk"
 
 if [ ! -f $MAGISKINIT ]; then
-  abort "! Don't support current Magisk version. Please wait for update."
+  abort "! Can't find $MAGISKINIT, please check again."
 fi
 
 ./magiskboot --cpio ramdisk.cpio \
