@@ -21,11 +21,11 @@ Since AOSP only support vfat for external sdcard. Add exfat/ntfs/ext4/f2fs suppo
 ## Known issue
 - Can't use sdcard in work space, this isn't a selinux issue:(
 
-You can report bug [here](https://github.com/noname8964/vold-posix/issues) if occurs issue.
+You can report bug [here](https://github.com/null4n/vold-posix/issues) if occurs issue.
 
-vold source code can found [here](https://github.com/noname8964/system_vold).
+vold source code can found [here](https://github.com/null4n/system_vold).
 
-magiskinit soucre code can found [here](https://github.com/noname8964/Magisk/blob/vold-posix/native/jni/init.c).
+magiskinit soucre code can found [here](https://github.com/null4n/Magisk/blob/vold-posix/native/jni/init.c).
 
 exfat/ntfs use fuse driver. soucre code is from [LineageOS](https://github.com/LineageOS).
 

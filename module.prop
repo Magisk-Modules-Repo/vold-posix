@@ -2,6 +2,6 @@ id=vold-posix
 name=Vold - exFAT/NTFS/EXT4/F2FS Support
 version=2.0
 versionCode=1
-author=noname8964 @ github.com
+author=null4n @ github.com
 description=Add exfat/ntfs/ext4/f2fs filesystem support for external sdcard. Only for AOSP-like system. (f2fs only available if your kernel support it.)
 minMagisk=17100
