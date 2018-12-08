@@ -103,4 +103,71 @@ set_permissions() {
 # update-binary. Refrain from adding code directly into update-binary, as it will make it
 # difficult for you to migrate your modules to newer template versions.
 # Make update-binary as clean as possible, try to only do function calls in it.
+patch_boot() {
+  ui_print "- Patching boot image"
+  find_boot_image
+  find_dtbo_image
+
+  [ -z $BOOTIMAGE ] && abort "! Unable to detect target image"
+  ui_print "- Target image: $BOOTIMAGE"
+  [ -z $DTBOIMAGE ] || ui_print "- DTBO image: $DTBOIMAGE"
+  [ -e "$BOOTIMAGE" ] || abort "$BOOTIMAGE does not exist!"
+
+  ui_print "- Unpacking boot image"
+  cd $INSTALLER && chmod 0755 ./magiskboot
+  ./magiskboot --unpack "$BOOTIMAGE"
+
+  case $? in
+    1 )
+      abort "! Unable to unpack boot image"
+      ;;
+    2 )
+      ui_print "- ChromeOS boot image detected"
+      abort "! Unsupport type"
+      ;;
+    3 )
+      ui_print "! Sony ELF32 format detected"
+      abort "! Please use BootBridge from @AdrianDC to flash Magisk"
+      ;;
+    4 )
+      ui_print "! Sony ELF64 format detected"
+      abort "! Stock kernel cannot be patched, please use a custom kernel"
+  esac
+
+  ui_print "- Checking ramdisk status"
+  ./magiskboot --cpio ramdisk.cpio test
+  case $? in
+    0 )  # Stock boot
+      ui_print "- Stock boot image detected"
+      abort "! Please install Magisk first"
+      ;;
+    1 )  # Magisk patched
+      ui_print "- Magisk patched boot image detected"
+      ;;
+    2 ) # Other patched
+      ui_print "! Boot image patched by unsupported programs"
+      abort "! Please restore stock boot image"
+      ;;
+  esac
+
+  ui_print "- Patching ramdisk"
+
+  if [ ! -f $MAGISKINIT ]; then
+    abort "! Can't find $MAGISKINIT, please check again."
+  fi
+
+  ./magiskboot --cpio ramdisk.cpio \
+  "add 750 init $MAGISKINIT" \
+  "add 755 vold $MODPATH/system/bin/vold" \
+  "add 750 init.custom.rc init.custom.rc"
+
+  ui_print "- Repacking boot image"
+  ./magiskboot --repack "$BOOTIMAGE" || abort "! Unable to repack boot image!"
+
+  ./magiskboot --cleanup
+
+  ui_print "- Flashing new boot image"
+  flash_image new-boot.img "$BOOTIMAGE" || abort "! Insufficient partition size"
+  rm -f new-boot.img
+}
 
