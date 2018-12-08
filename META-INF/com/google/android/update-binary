@@ -72,7 +72,7 @@ fi
 MAGISKVER=`echo $MAGISK_VER_CODE|cut -c1-3`
 MAGISKINIT=magiskinit_"$MAGISKVER"
 
-if [ 171 -gt $MAGISKVER ] || [ $MAGISKVER -gt 173 ]; then
+if [ ! $MAGISKVER -eq 171 ] && [ ! $MAGISKVER -eq 180 ]; then
   abort "! Don't support current Magisk version. Please wait for update."
 fi
 
