@@ -15,7 +15,20 @@ error() {
   exit 1
 }
 
-if [ ! -x /vold ]; then
+# Load utility functions
+if [ -f /data/adb/magisk/util_functions.sh ]; then
+  . /data/adb/magisk/util_functions.sh
+elif [ -f /data/magisk/util_functions.sh ]; then
+  NVBASE=/data
+  . /data/magisk/util_functions.sh
+else
+  error "Please install Magisk v17.0+!"
+fi
+
+MAGISKVER=`echo $MAGISK_VER_CODE|cut -c1-3`
+MAGISKINIT=magiskinit_"$MAGISKVER"
+
+patch_boot() {
   TMPDIR=/dev/tmp
   INSTALLER=$TMPDIR/install
 
@@ -23,26 +36,17 @@ if [ ! -x /vold ]; then
   rm -rf $TMPDIR 2>/dev/null
   mkdir -p $INSTALLER
 
-  # Load utility functions
-  if [ -f /data/adb/magisk/util_functions.sh ]; then
-    . /data/adb/magisk/util_functions.sh
-  elif [ -f /data/magisk/util_functions.sh ]; then
-    NVBASE=/data
-    . /data/magisk/util_functions.sh
-  else
-    error "Please install Magisk v17.0+!"
-    exit 1
-  fi
-
   # Mount partitions
   mount_partitions
-
-  MAGISKVER=`echo $MAGISK_VER_CODE|cut -c1-3`
-  MAGISKINIT=magiskinit_"$MAGISKVER"
 
   log_print "- Patching boot image"
   find_boot_image
   find_dtbo_image
+
+  log_print "- Patching ramdisk"
+  if [ ! -f $MODDIR/$MAGISKINIT ]; then
+    error "! Don't support current Magisk version. Please wait for update."
+  fi
 
   [ -z $BOOTIMAGE ] && error "! Unable to detect target image"
   log_print "- Target image: $BOOTIMAGE"
@@ -86,10 +90,6 @@ if [ ! -x /vold ]; then
       ;;
   esac
 
-  log_print "- Patching ramdisk"
-  if [ ! -f $MODDIR/$MAGISKINIT ]; then
-    error "! Don't support current Magisk version. Please wait for update."
-  fi
   $MODDIR/magiskboot --cpio ramdisk.cpio \
   "add 750 init $MODDIR/$MAGISKINIT" \
   "add 755 vold $MODDIR/system/bin/vold" \
@@ -104,4 +104,6 @@ if [ ! -x /vold ]; then
   flash_image new-boot.img "$BOOTIMAGE" || error "! Insufficient partition size"
   log_print "- Done, reboot to apply."
   rm -rf $TMPDIR
-fi
+}
+
+diff "$MODDIR/$MAGISKINIT" /sbin/magiskinit || patch_boot
