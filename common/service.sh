@@ -1,10 +1,12 @@
 #!/system/bin/sh
-# Please don't hardcode /magisk/modname/... ; instead, please use $MODDIR/...
-# This will make your scripts compatible even if Magisk change its mount point in the future
+# Do NOT assume where your module will be located.
+# ALWAYS use $MODDIR if you need to know where this script
+# and module is placed.
+# This will make sure your module will still work
+# if Magisk change its mount point in the future
 MODDIR=${0%/*}
 
 # This script will be executed in late_start service mode
-# More info in the main Magisk thread
 
 log_print() {
   echo "Vold-posix: $1" >> /cache/magisk.log
@@ -16,13 +18,12 @@ error() {
 }
 
 # Load utility functions
+# Load utility functions
 if [ -f /data/adb/magisk/util_functions.sh ]; then
   . /data/adb/magisk/util_functions.sh
-elif [ -f /data/magisk/util_functions.sh ]; then
-  NVBASE=/data
-  . /data/magisk/util_functions.sh
+  NVBASE=/data/adb
 else
-  error "Please install Magisk v17.0+!"
+  error "Can't load magisk environment!"
 fi
 
 MAGISKVER=`echo $MAGISK_VER_CODE|cut -c1-3`
