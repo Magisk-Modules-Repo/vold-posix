@@ -13,18 +13,19 @@ Since AOSP only support vfat for external sdcard. Add exfat/ntfs/ext4/f2fs suppo
 - Don't format sdcard on the phone, or otherwise it will format to FAT32.
 - OTG tested on my phone, works as well as external sdcard.
 - Since v2.0 will patch the boot image. After you flash your boot image or upgrade the magisk, module will auto patch it again while booting. After that you need reboot to apply the patch.
-- Only support Magisk v17.1 & v18.0 at the time. 
+- Only support Magisk v17.1 & v20+. 
 
 *I will only support from current stable version(ensure) to current beta version(maybe). Or you can compile magiskinit by yourself and put it in the module folder as magiskinit_$version, it will auto patch the valid version.*
 
 ## Supported Magisk
 - Magisk 17.1 
-- Magisk 18.0
+- Magisk 20+
 
 ## Changelog
 - v1.0 inital release
 - v2.0 fixes issue with "Android for Work" feature(island/etc).
 - v2.0.1 merge magisk 18.0
+- v3.0.0 support magisk 17 & 20+
 
 ## Known issue
 - Can't use sdcard in work space, this's Google's limitation after Oreo :(
@@ -32,8 +33,6 @@ Since AOSP only support vfat for external sdcard. Add exfat/ntfs/ext4/f2fs suppo
 You can report bug [here](https://github.com/null4n/vold-posix/issues) if occurs issue.
 
 vold source code can found [here](https://github.com/null4n/system_vold).
-
-magiskinit soucre code can found [here](https://github.com/null4n/Magisk/blob/vold-posix/native/jni/init.c).
 
 exfat/ntfs use fuse driver. soucre code is from [LineageOS](https://github.com/LineageOS).
 

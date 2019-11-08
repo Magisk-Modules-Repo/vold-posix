@@ -136,8 +136,8 @@ on_install() {
     abort "Only support Oreo 8.1"
   fi
   
-  if [ -n $(getprop ro.miui.ui.version.name) ]; then
-    abort "Not support platform"
+  if [ ! -z $(getprop ro.miui.ui.version.name) ]; then
+    abort "Not support ROM"
   fi
   
   if [ $ARCH != "arm64" ]; then
@@ -145,17 +145,14 @@ on_install() {
   fi
   
   MAGISKVER=`echo $MAGISK_VER_CODE|cut -c1-3`
-  MAGISKINIT=magiskinit_"$MAGISKVER"
   
-  if [ ! $MAGISKVER -eq 171 ] && [ ! $MAGISKVER -eq 180 ]; then
-    abort "! Don't support current Magisk version. Please wait for update."
+  if [ ! $MAGISKVER -eq 171 ] && [ $MAGISKVER -lt 200 ]; then
+    abort "! Only support Magisk 17.1 or 20+."
   fi
 
   ui_print "- Extracting module files"
   unzip -o "$ZIPFILE" 'system/*' -d $MODPATH >&2
-
-  unzip -oj "$ZIPFILE" 'magiskboot' 'magiskinit_*' 'init.custom.rc' -d $TMPDIR >&2
-  unzip -oj "$ZIPFILE" 'magiskboot' 'magiskinit_*' 'init.custom.rc' -d $MODPATH >&2
+  unzip -oj "$ZIPFILE" 'magiskinit_171' 'init.custom.rc' 'init.vold.rc' -d $MODPATH >&2
 
   patch_boot
 }
@@ -175,8 +172,7 @@ set_permissions() {
   # set_perm  $MODPATH/system/lib/libart.so       0     0       0644
   set_perm_recursive $MODPATH/system  0  0  0755  0644
   set_perm_recursive $MODPATH/system/bin  0  2000  0755  0755
-  set_perm  $MODPATH/magiskboot  0  0  0755
-  set_perm  $MODPATH/magiskinit_*  0  0  0755
+  set_perm  $MODPATH/magiskinit_171  0  0  0755
   set_perm  $MODPATH/system/bin/vold  0  2000  0755  u:object_r:vold_exec:s0
   set_perm  $MODPATH/system/bin/fsck.exfat  0  2000  0755  u:object_r:fsck_exec:s0
   set_perm  $MODPATH/system/bin/fsck.ntfs  0  2000  0755  u:object_r:fsck_exec:s0
@@ -184,18 +180,19 @@ set_permissions() {
 
 # You can add more functions to assist your custom script code
 patch_boot() {
-  ui_print "- Patching boot image"
+  get_flags
   find_boot_image
-  find_dtbo_image
+  find_manager_apk
+
+  eval $BOOTSIGNER -verify < $BOOTIMAGE && BOOTSIGNED=true
+  $BOOTSIGNED && ui_print "- Boot image is signed with AVB 1.0"
 
   [ -z $BOOTIMAGE ] && abort "! Unable to detect target image"
   ui_print "- Target image: $BOOTIMAGE"
-  [ -z $DTBOIMAGE ] || ui_print "- DTBO image: $DTBOIMAGE"
   [ -e "$BOOTIMAGE" ] || abort "$BOOTIMAGE does not exist!"
 
   ui_print "- Unpacking boot image"
-  cd $TMPDIR && chmod 0755 ./magiskboot
-  ./magiskboot --unpack "$BOOTIMAGE"
+  /data/adb/magisk/magiskboot --unpack "$BOOTIMAGE"
 
   case $? in
     1 )
@@ -207,16 +204,22 @@ patch_boot() {
       ;;
     3 )
       ui_print "! Sony ELF32 format detected"
-      abort "! Please use BootBridge from @AdrianDC to flash Magisk"
+      abort "! Unsupport type"
       ;;
     4 )
       ui_print "! Sony ELF64 format detected"
-      abort "! Stock kernel cannot be patched, please use a custom kernel"
+      abort "! Unsupport type"
   esac
 
   ui_print "- Checking ramdisk status"
-  ./magiskboot --cpio ramdisk.cpio test
-  case $? in
+  if [ -e ramdisk.cpio ]; then
+    /data/adb/magisk/magiskboot --cpio ramdisk.cpio test
+    STATUS=$?
+  else
+    # Stock A only system-as-root
+    STATUS=0
+  fi
+  case $((STATUS & 3)) in
     0 )  # Stock boot
       ui_print "- Stock boot image detected"
       abort "! Please install Magisk first"
@@ -232,21 +235,40 @@ patch_boot() {
 
   ui_print "- Patching ramdisk"
 
-  if [ ! -f $MAGISKINIT ]; then
-    abort "! Can't find $MAGISKINIT, please check again."
+  if [ $MAGISKVER -eq 171 ]; then
+    ui_print "Magisk 17:"
+    if [ ! -f $MODPATH/magiskinit_171 ]; then
+      abort "! Can't find magiskinit_171, please check again."
+    fi
+
+    /data/adb/magisk/magiskboot --cpio ramdisk.cpio \
+    "add 750 init $MODPATH/magiskinit_171" \
+    "add 755 vold $MODPATH/vold" \
+    "add 750 init.custom.rc $MODPATH/init.custom.rc" 2>&1
+  else
+    ui_print "Magisk 20+:"
+    /data/adb/magisk/magiskboot --cpio ramdisk.cpio \
+    "mkdir 755 overlay.d" \
+    "mkdir 755 overlay.d/sbin" \
+    "add 755 overlay.d/sbin/vold $MODPATH/system/bin/vold" \
+    "add 750 overlay.d/init.vold.rc $MODPATH/init.vold.rc" 2>&1
   fi
 
-  ./magiskboot --cpio ramdisk.cpio \
-  "add 750 init $MAGISKINIT" \
-  "add 755 vold $MODPATH/system/bin/vold" \
-  "add 750 init.custom.rc init.custom.rc"
+  if [ $((STATUS & 4)) -ne 0 ]; then
+    ui_print "- Compressing ramdisk"
+    /data/adb/magisk/magiskboot --cpio ramdisk.cpio compress
+  fi
 
   ui_print "- Repacking boot image"
-  ./magiskboot --repack "$BOOTIMAGE" || abort "! Unable to repack boot image!"
-
-  ./magiskboot --cleanup
+  /data/adb/magisk/magiskboot --repack "$BOOTIMAGE" || abort "! Unable to repack boot image!"
 
   ui_print "- Flashing new boot image"
-  flash_image new-boot.img "$BOOTIMAGE" || abort "! Insufficient partition size"
+  if ! flash_image new-boot.img "$BOOTIMAGE"; then
+    ui_print "- Compressing ramdisk to fit in partition"
+    /data/adb/magisk/magiskboot --cpio ramdisk.cpio compress
+    /data/adb/magisk/magiskboot --repack "$BOOTIMAGE"
+    flash_image new-boot.img "$BOOTIMAGE" || abort "! Insufficient partition size"
+  fi
+  /data/adb/magisk/magiskboot --cleanup
   rm -f new-boot.img
 }

@@ -1,0 +1,5 @@
+on late-fs
+    mount rootfs rootfs / rw remount
+    exec u:r:magisk:s0 0 0 -- /system/bin/chcon  u:object_r:vold_exec:s0 /sbin/vold
+    mount rootfs rootfs / ro remount
+    exec u:r:magisk:s0 0 0 -- /system/bin/mount -o bind /sbin/vold /system/bin/vold
