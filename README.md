@@ -7,7 +7,7 @@ Since AOSP only support vfat for external sdcard. Add exfat/ntfs/ext4/f2fs suppo
 - arm64 system. 
   (Compile ``vold/fuse/fsck`` yourself if you have other arch devices)
 
-*__Note:__ Don't use this module if you still want to use the built-in exfat driver from your rom!
+__Note:__ Don't use this module if you still want to use the built-in exfat driver from your rom!
 
 ## Instructions
 - Don't format sdcard on the phone, or otherwise it will format to FAT32.
@@ -15,7 +15,7 @@ Since AOSP only support vfat for external sdcard. Add exfat/ntfs/ext4/f2fs suppo
 - Since v2.0 will patch the boot image. After you flash your boot image or upgrade the magisk, module will auto patch it again while booting. After that you need reboot to apply the patch.
 - Only support Magisk v17.1 & v20+. 
 
-*I will only support from current stable version(ensure) to current beta version(maybe). Or you can compile magiskinit by yourself and put it in the module folder as magiskinit_$version, it will auto patch the valid version.*
+*Since 20.0, Magisk has add `/overlay.d` to patch root directory. All version after 20.0 will be supported. After upgrade Magisk, it will automatically patch ramdisk and flash it. Just reboot after boot completed.*
 
 ## Supported Magisk
 - Magisk 17.1 
