@@ -26,6 +26,7 @@ __Note:__ Don't use this module if you still want to use the built-in exfat driv
 - v2.0 fixes issue with "Android for Work" feature(island/etc).
 - v2.0.1 merge magisk 18.0
 - v3.0.0 support magisk 17 & 20+
+- v3.0.1 add uninstall script for 20+
 
 ## Known issue
 - Can't use sdcard in work space, this's Google's limitation after Oreo :(

@@ -233,6 +233,11 @@ patch_boot() {
       ;;
   esac
 
+  if [ $((STATUS & 8)) -ne 0 ]; then
+    # Possibly using 2SI, export env var
+    export TWOSTAGEINIT=true
+  fi
+
   ui_print "- Patching ramdisk"
 
   if [ $MAGISKVER -eq 171 ]; then

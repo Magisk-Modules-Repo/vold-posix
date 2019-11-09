@@ -1,12 +1,8 @@
 #!/system/bin/sh
-# Do NOT assume where your module will be located.
-# ALWAYS use $MODDIR if you need to know where this script
-# and module is placed.
-# This will make sure your module will still work
-# if Magisk change its mount point in the future
+##########################################################################################
+# Preparation
+##########################################################################################
 MODDIR=${0%/*}
-
-# This script will be executed in late_start service mode
 
 log_print() {
   echo "Vold-posix: $1" >> /cache/magisk.log
@@ -34,9 +30,7 @@ else
   require_new_magisk
 fi
 
-MAGISKVER=`echo $MAGISK_VER_CODE|cut -c1-3`
-
-patch_boot() {
+restore_boot() {
   TMPDIR=/dev/tmp
   INSTALLER=$TMPDIR/install
 
@@ -117,23 +111,8 @@ patch_boot() {
 
   log_print "- Patching ramdisk"
 
-  if [ $MAGISKVER -eq 171 ]; then
-    log_print "Magisk 17:"
-    if [ ! -f $MODPATH/magiskinit_171 ]; then
-      error "! Can't find magiskinit_171, please check again."
-    fi
-
-    /data/adb/magisk/magiskboot --cpio ramdisk.cpio \
-    "add 750 init $MODPATH/magiskinit_171" \
-    "add 755 vold $MODPATH/system/bin/vold" \
-    "add 750 init.custom.rc $MODPATH/init.custom.rc" 2>&1
-  else
-    /data/adb/magisk/magiskboot --cpio ramdisk.cpio \
-    "mkdir 755 overlay.d" \
-    "mkdir 755 overlay.d/sbin" \
-    "add 755 overlay.d/sbin/vold $MODPATH/system/bin/vold" \
-    "add 750 overlay.d/init.vold.rc $MODPATH/init.vold.rc" 2>&1
-  fi
+  /data/adb/magisk/magiskboot cpio ramdisk.cpio \
+  "rm -r overlay.d/sbin"
 
   if [ $((STATUS & 4)) -ne 0 ]; then
     log_print "- Compressing ramdisk"
@@ -153,6 +132,4 @@ patch_boot() {
   rm -rf $TMPDIR
 }
 
-if [ ! -e /vold ] && [ ! -e /sbin/vold ]; then
-  patch_boot
-fi
+restore_boot
